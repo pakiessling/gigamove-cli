@@ -1,0 +1,18 @@
+# Private / local-only files — never publish
+_private/
+*.har
+*.log
+cookies.txt
+*cookies*.txt
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+uv.lock
+
+# OS
+.DS_Store

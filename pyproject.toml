@@ -1,0 +1,36 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "gigamove-cli"
+dynamic = ["version"]
+description = "CLI tool to upload files via RWTH Aachen's Gigamove 2.0"
+readme = "README.md"
+license = { file = "LICENSE" }
+authors = [{ name = "pakiessling" }]
+requires-python = ">=3.8"
+dependencies = ["requests"]
+classifiers = [
+    "Environment :: Console",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: POSIX",
+    "Programming Language :: Python :: 3",
+    "Topic :: Communications :: File Sharing",
+]
+
+[project.optional-dependencies]
+progress = ["tqdm"]
+
+[project.scripts]
+gigamove = "gigamove.cli:main"
+gigamove-cli = "gigamove.cli:main"
+
+[tool.hatch.version]
+path = "gigamove/__init__.py"
+
+[tool.hatch.build.targets.sdist]
+include = ["gigamove", "README.md", "LICENSE"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["gigamove"]
