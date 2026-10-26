@@ -43,6 +43,7 @@ def cmd_upload(args):
         expiry_days=args.expires,
         recipients=args.email,
         notify=not args.no_notify,
+        md5=args.md5,
         verbose=args.verbose,
     )
 
@@ -97,6 +98,9 @@ def main():
                     help=f"Expiry in days (1-{MAX_EXPIRY_DAYS}, default {MAX_EXPIRY_DAYS})")
     up.add_argument("--no-notify", action="store_true",
                     help="Don't email me a reminder before the file expires")
+    up.add_argument("--md5", action="store_true",
+                    help="Compute the file's MD5 checksum before uploading and add it "
+                         "to the description")
     up.add_argument("--cookie-file", metavar="PATH",
                     help="Path to Netscape-format cookies.txt (overrides ~/.config/gigamove/cookies.txt)")
     up.add_argument("-v", "--verbose", action="store_true", help="Verbose output on stderr")

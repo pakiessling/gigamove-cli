@@ -60,7 +60,7 @@ pyproject.toml  # distribution gigamove-cli; commands gigamove + gigamove-cli al
 ## CLI Interface
 ```
 gigamove upload FILE [--comment TEXT] [--ask-password | --password TEXT] [--email ADDR...]
-                     [--expires DAYS] [--no-notify] [--cookie-file PATH] [-v]
+                     [--expires DAYS] [--md5] [--no-notify] [--cookie-file PATH] [-v]
 
 gigamove auth COOKIES.txt | gigamove auth --check
 ```
@@ -77,5 +77,7 @@ gigamove auth COOKIES.txt | gigamove auth --check
 - Max expiry: 14 days
 - expiryDate sent as YYYY-MM-DD (e.g., today + 14 days)
 - notify=true = "E-Mail Notification" checkbox: uploader is emailed before the file expires (recipients get the link by email via the `recipients` field)
+- --md5: checksum computed in a pre-pass (comment goes with every chunk), appended to comment as
+  "<comment> - MD5: <hex>"; re-hashed during upload and aborted before the last chunk on mismatch
 - Password can also come from GIGAMOVE_PASSWORD env var
 - Private reference material (HAR capture, logs) lives in `_private/` (git-ignored, never publish)

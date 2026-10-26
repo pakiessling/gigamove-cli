@@ -89,6 +89,7 @@ Uploads one file and prints its download link.
 | `--expires DAYS` | `14` | Days until the link expires, 1–14 |
 | `--ask-password` | off | Prompt for a download password |
 | `--password TEXT` | none | Download password given on the command line (see below) |
+| `--md5` | off | Compute the file's MD5 checksum before uploading and add it to the description, so recipients can verify the download |
 | `--no-notify` | off | Don't send yourself a reminder email before the file expires |
 | `--cookie-file PATH` | `~/.config/gigamove/cookies.txt` | Use a different cookie file |
 | `-v`, `--verbose` | off | Show extra details and every failed attempt |
@@ -111,6 +112,9 @@ gigamove upload results.tar.gz \
 # Password-protected
 gigamove upload secret.zip --ask-password
 GIGAMOVE_PASSWORD="$(cat ~/.gigamove-pw)" gigamove upload secret.zip
+
+# Add the MD5 checksum to the description ("Run 42 output - MD5: 9e107d9d...")
+gigamove upload results.tar.gz --comment "Run 42 output" --md5
 
 # Use another account's cookies
 gigamove upload file.zip --cookie-file ~/cookies-other.txt

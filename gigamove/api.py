@@ -1,3 +1,4 @@
+import hashlib
 import math
 import re
 import secrets
@@ -188,6 +189,30 @@ class UploadPage:
         self.file_quota = gb * 1000**3 if gb else MAX_FILE_SIZE
 
 
+def _md5():
+    try:
+        return hashlib.md5(usedforsecurity=False)  # Python 3.9+; works on FIPS systems
+    except TypeError:
+        return hashlib.md5()
+
+
+def file_md5(filepath: Path) -> str:
+    """MD5 hex digest of a file, with progress on stderr."""
+    h = _md5()
+    progress = _Progress(filepath.stat().st_size, f"MD5 {filepath.name}")
+    try:
+        with open(filepath, "rb") as f:
+            while True:
+                data = f.read(CHUNK_SIZE)
+                if not data:
+                    break
+                h.update(data)
+                progress.update(len(data))
+    finally:
+        progress.close()
+    return h.hexdigest()
+
+
 def get_upload_page(session: requests.Session) -> UploadPage:
     # A redirect here means the session is gone (Gigamove sends us to SSO).
     resp = session.get(f"{BASE_URL}/en/provide", timeout=30, allow_redirects=False)
@@ -258,6 +283,7 @@ def upload_file(
     expiry_days: int = MAX_EXPIRY_DAYS,
     recipients: "list | None" = None,
     notify: bool = True,
+    md5: bool = False,
     verbose: bool = False,
 ) -> str:
     if recipients is None:
@@ -291,6 +317,15 @@ def upload_file(
     if page.max_expiry and expiry_date > page.max_expiry:
         expiry_date = page.max_expiry  # the server's "today" may differ from ours
 
+    # Optional checksum, appended to the description. Needs its own pass over the file
+    # because the description is sent with every chunk, including the first.
+    digest = None
+    if md5:
+        _log(f"Computing MD5 of {filepath.name}...")
+        digest = file_md5(filepath)
+        _log(f"MD5: {digest}")
+        comment = f"{comment} - MD5: {digest}" if comment else f"MD5: {digest}"
+
     total_chunks = math.ceil(file_size / CHUNK_SIZE)
     upload_id = secrets.token_hex(12)
     fields = {
@@ -315,6 +350,7 @@ def upload_file(
     timeout = _chunk_timeout(CHUNK_SIZE)
     progress = _Progress(file_size, filepath.name)
     result = {}
+    upload_hash = _md5() if digest else None
     try:
         with open(filepath, "rb") as f:
             for index in range(total_chunks):
@@ -322,6 +358,12 @@ def upload_file(
                 expected = min(CHUNK_SIZE, file_size - index * CHUNK_SIZE)
                 if len(data) != expected:
                     raise GigamoveError(f"{filepath} changed while uploading")
+                if upload_hash is not None:
+                    upload_hash.update(data)
+                    if index == total_chunks - 1 and upload_hash.hexdigest() != digest:
+                        # Checked before the last chunk, so the upload is never completed
+                        # with a wrong checksum in its description.
+                        raise GigamoveError(f"{filepath} changed after computing its MD5")
                 result = _retry(
                     lambda: _send_chunk(session, page.csrf, fields, index, data, timeout),
                     f"Chunk {index + 1}/{total_chunks}", progress.write, verbose,
